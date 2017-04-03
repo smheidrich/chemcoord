@@ -131,7 +131,7 @@ class Zmat(_common_class.common_methods):
                 implemented in ``Fortran``.
 
         Returns:
-            Zmat: Reindexed version of the zmatrix.
+            Cartesian: Reindexed version of the zmatrix.
 
         .. [1] Parsons J, Holmes JB, Rojas JM, Tsai J, Strauss CE (2005).
             Practical conversion from torsion space to Cartesian space for in
