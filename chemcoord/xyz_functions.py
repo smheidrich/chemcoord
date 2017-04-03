@@ -17,7 +17,7 @@ from . import test
 from ._exceptions import PhysicalMeaningError
 from . import constants
 from . import utilities
-#from . import zmat_functions
+# from . import zmat_functions
 from . import export
 from . import settings
 import io
@@ -32,6 +32,7 @@ def pick(my_set):
     my_set.add(x)
     return x
 
+
 @export
 class Cartesian(_common_class.common_methods):
     """The main class for dealing with cartesian Coordinates.
@@ -41,7 +42,7 @@ class Cartesian(_common_class.common_methods):
 
         Args:
             frame (pd.DataFrame): A Dataframe with at least the
-                columns ``['atom', 'x', 'y', 'z']``. 
+                columns ``['atom', 'x', 'y', 'z']``.
                 Where ``'atom'`` is a string for the elementsymbol.
 
         Returns:
@@ -57,16 +58,15 @@ class Cartesian(_common_class.common_methods):
                 self.__bond_dic = tmp.__bond_dic
             except AttributeError:
                 pass
-            
 
         except AttributeError:
             # Create from pd.DataFrame
             if not self._is_physical(init.columns):
-                raise PhysicalMeaningError('There are columns missing for a meaningful description of a molecule')
+                raise PhysicalMeaningError('There are columns missing for a \
+meaningful description of a molecule')
             self.frame = init.copy()
             self.shape = self.frame.shape
             self.n_atoms = self.shape[0]
-
 
     def copy(self):
         molecule = self.__class__(self.frame)
@@ -76,17 +76,14 @@ class Cartesian(_common_class.common_methods):
             pass
         return molecule
 
-
     def _to_Cartesian(self):
         return self.copy()
-
 
     def _to_ase_Atoms(self):
         import ase
         atoms = ''.join(self[:, 'atom'])
         positions = self.location()
         return ase.Atoms(atoms, positions)
-
 
     def _give_distance_array(self):
         """Returns a frame with a column for the distance from origin.
@@ -127,7 +124,7 @@ class Cartesian(_common_class.common_methods):
         include = self.index if (include is None) else include
 
         def summed_bond_size_array(bond_size_dic):
-            bond_size_vector = np.array([bond_size_dic[key] for key in include])
+            bond_size_vector = np.array([bond_size_dic[i] for i in include])
             A = np.expand_dims(bond_size_vector, axis=1)
             B = np.expand_dims(bond_size_vector, axis=0)
             C = A + B
@@ -212,16 +209,19 @@ class Cartesian(_common_class.common_methods):
                 zip(self.index, [set([]) for _ in range(self.n_atoms)]))
 
             molecule2 = self.add_data(['valency', atomic_radius_data])
-            valency_dic = dict(zip(molecule2.index, molecule2[:, 'valency'].astype('int64')))
+            valency_dic = dict(zip(
+                molecule2.index, molecule2[:, 'valency'].astype('int64')))
 
-            atomic_radius_dic = dict(zip(molecule2.index, molecule2[:, atomic_radius_data]))
+            atomic_radius_dic = dict(zip(
+                molecule2.index, molecule2[:, atomic_radius_data]))
 
             if modified_properties is None:
                 pass
             else:
                 for key in modified_properties:
                     valency_dic[key] = modified_properties[key]['valency']
-                    atomic_radius_dic[key] = modified_properties[key]['atomic_radius']
+                    atomic_radius_dic[key] = modified_properties[key][
+                        'atomic_radius']
             return bond_dic, valency_dic, atomic_radius_dic
 
         def get_bonds_local(
@@ -231,7 +231,8 @@ class Cartesian(_common_class.common_methods):
                 atomic_radius_dic,
                 use_valency,
                 index_of_cube=self.index):
-            overlap_array, convert_to = self._overlap(atomic_radius_dic, index_of_cube)
+            overlap_array, convert_to = self._overlap(
+                atomic_radius_dic, index_of_cube)
             np.fill_diagonal(overlap_array, -1.)
             bin_overlap_array = overlap_array > 0
             actual_valency = np.sum(bin_overlap_array, axis=1)
@@ -1492,7 +1493,7 @@ class Cartesian(_common_class.common_methods):
             output.sort_values(by='distance', inplace=True)
         return output
 
-    
+
     def change_numbering(self, rename_dict, inplace=False):
         """Returns the reindexed version of Cartesian.
 
@@ -1503,7 +1504,7 @@ class Cartesian(_common_class.common_methods):
             Cartesian: A renamed copy according to the dictionary passed.
         """
         output = self if inplace else self.copy()
-        
+
         replace_list = list(rename_dict.keys())
         with_list = [rename_dict[key] for key in replace_list]
 
