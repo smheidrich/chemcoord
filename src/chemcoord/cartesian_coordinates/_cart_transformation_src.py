@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
 import numba as nb
 import numpy as np
 from numba import jit
+from numba.pycc import CC
 from numpy import arccos, arctan2, sqrt
 
 import chemcoord.constants as constants
@@ -13,10 +14,13 @@ from chemcoord.cartesian_coordinates.xyz_functions import (_jit_cross,
                                                            _jit_normalize)
 from chemcoord.exceptions import ERR_CODE_OK, ERR_CODE_InvalidReference
 
+module = CC('_cart_transformation')
 
-@jit(nopython=True)
+
+@module.export('get_ref_pos_v', 'f8[:, :](f8[:, :], i8[:])')
 def get_ref_pos_v(X, indices):
     ref_pos = np.empty((3, len(indices)))
+    print(nb.type(indices))
     for col, i in enumerate(indices):
         if i < constants.keys_below_are_abs_refs:
             ref_pos[:, col] = constants._jit_absolute_refs(i)
@@ -25,7 +29,7 @@ def get_ref_pos_v(X, indices):
     return ref_pos
 
 
-@jit(nopython=True)
+@module.export('get_ref_pos_i', 'f8[:](f8[:, :], i8)')
 def get_ref_pos_i(X, i):
     if i < constants.keys_below_are_abs_refs:
         ref_pos = constants._jit_absolute_refs(i)
@@ -34,7 +38,7 @@ def get_ref_pos_i(X, i):
     return ref_pos
 
 
-@jit(nopython=True)
+@module.export('get_B', 'f8[:, :](f8[:, :], i8[:, :], i8)')
 def get_B(X, c_table, j):
     B = np.empty((3, 3))
     ref_pos = get_ref_pos_v(X, c_table[:, j])
@@ -51,7 +55,7 @@ def get_B(X, c_table, j):
     return (ERR_CODE_OK, B)
 
 
-@jit(nopython=True)
+@module.export('get_grad_B', 'f8[:, :](f8[:, :], i8[:, :], i8)')
 def get_grad_B(X, c_table, j):
     grad_B = np.empty((3, 3, 3, 3))
     ref_pos = get_ref_pos_v(X, c_table[:, j])
@@ -915,7 +919,7 @@ def get_grad_B(X, c_table, j):
     return grad_B
 
 
-@jit(nb.f8[:](nb.f8[:]), nopython=True)
+@module.export('get_S_inv', 'f8[:](f8[:])')
 def get_S_inv(v):
     x, y, z = v
     r = np.linalg.norm(v)
@@ -926,7 +930,7 @@ def get_S_inv(v):
     return np.array([r, alpha, delta])
 
 
-@jit(nb.f8[:, :](nb.f8[:]), nopython=True)
+@module.export('get_grad_S_inv', 'f8[:](f8[:])')
 def get_grad_S_inv(v):
     x, y, z = v
     grad_S_inv = np.zeros((3, 3))
@@ -957,7 +961,7 @@ def get_grad_S_inv(v):
     return grad_S_inv
 
 
-@jit(nopython=True)
+@module.export('get_T', 'f8[:, :](f8[:, :], i8[:, :], i8)')
 def get_T(X, c_table, j):
     err, B = get_B(X, c_table, j)
     if err == ERR_CODE_OK:
@@ -968,7 +972,7 @@ def get_T(X, c_table, j):
     return err, result
 
 
-@jit(nopython=True)
+@module.export('get_C', 'f8[:, :](f8[:, :], i8[:, :])')
 def get_C(X, c_table):
     C = np.empty((3, c_table.shape[1]))
 
@@ -981,7 +985,7 @@ def get_C(X, c_table):
     return (ERR_CODE_OK, C)
 
 
-@jit(nopython=True)
+@module.export('get_grad_C', 'f8[:, :](f8[:, :], i8[:, :])')
 def get_grad_C(X, c_table):
     n_atoms = X.shape[1]
     grad_C = np.zeros((3, n_atoms, n_atoms, 3))

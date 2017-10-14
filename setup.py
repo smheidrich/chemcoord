@@ -9,6 +9,8 @@ from setuptools import setup, find_packages
 from io import open  # pylint:disable=redefined-builtin
 import version
 
+from src.chemcoord.cartesian_coordinates._cart_transformation_src import module
+
 MAIN_PACKAGE = 'chemcoord'
 DESCRIPTION = "Python module for dealing with chemical coordinates."
 LICENSE = 'LGPLv3'
@@ -60,6 +62,7 @@ def setup_package():
         packages=find_packages('src'),
         package_dir={'': 'src'},
         install_requires=INSTALL_REQUIRES,
+        ext_modules=[module.distutils_extension()]
     )
 
 
