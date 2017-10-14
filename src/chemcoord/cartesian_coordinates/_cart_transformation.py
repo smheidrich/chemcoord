@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numba as nb
 import numpy as np
-from numba import generated_jit, jit
+from numba import jit
 from numpy import arccos, arctan2, sqrt
 
 import chemcoord.constants as constants
@@ -14,33 +14,30 @@ from chemcoord.cartesian_coordinates.xyz_functions import (_jit_cross,
 from chemcoord.exceptions import ERR_CODE_OK, ERR_CODE_InvalidReference
 
 
-@generated_jit(nopython=True)
-def get_ref_pos(X, indices):  # pylint:disable=unused-argument
-    if isinstance(indices, nb.types.Array):
-        def f(X, indices):
-            ref_pos = np.empty((3, len(indices)))
-            for col, i in enumerate(indices):
-                if i < constants.keys_below_are_abs_refs:
-                    ref_pos[:, col] = constants._jit_absolute_refs(i)
-                else:
-                    ref_pos[:, col] = X[:, i]
-            return ref_pos
-        return f
-    elif isinstance(indices, nb.types.Integer):
-        def f(X, indices):
-            i = indices
-            if i < constants.keys_below_are_abs_refs:
-                ref_pos = constants._jit_absolute_refs(i)
-            else:
-                ref_pos = X[:, i]
-            return ref_pos
-        return f
+@jit(nopython=True)
+def get_ref_pos_v(X, indices):
+    ref_pos = np.empty((3, len(indices)))
+    for col, i in enumerate(indices):
+        if i < constants.keys_below_are_abs_refs:
+            ref_pos[:, col] = constants._jit_absolute_refs(i)
+        else:
+            ref_pos[:, col] = X[:, i]
+    return ref_pos
+
+
+@jit(nopython=True)
+def get_ref_pos_i(X, i):
+    if i < constants.keys_below_are_abs_refs:
+        ref_pos = constants._jit_absolute_refs(i)
+    else:
+        ref_pos = X[:, i]
+    return ref_pos
 
 
 @jit(nopython=True)
 def get_B(X, c_table, j):
     B = np.empty((3, 3))
-    ref_pos = get_ref_pos(X, c_table[:, j])
+    ref_pos = get_ref_pos_v(X, c_table[:, j])
     BA = ref_pos[:, 1] - ref_pos[:, 0]
     if _jit_isclose(BA, 0.).all():
         return (ERR_CODE_InvalidReference, B)
@@ -57,7 +54,7 @@ def get_B(X, c_table, j):
 @jit(nopython=True)
 def get_grad_B(X, c_table, j):
     grad_B = np.empty((3, 3, 3, 3))
-    ref_pos = get_ref_pos(X, c_table[:, j])
+    ref_pos = get_ref_pos_v(X, c_table[:, j])
     v_b, v_a, v_d = ref_pos[:, 0], ref_pos[:, 1], ref_pos[:, 2]
     x_b, y_b, z_b = v_b
     x_a, y_a, z_a = v_a
@@ -964,7 +961,7 @@ def get_grad_S_inv(v):
 def get_T(X, c_table, j):
     err, B = get_B(X, c_table, j)
     if err == ERR_CODE_OK:
-        v_b = get_ref_pos(X, c_table[0, j])
+        v_b = get_ref_pos_i(X, c_table[0, j])
         result = np.dot(B.T, X[:, j] - v_b)
     else:
         result = np.empty(3)
@@ -990,7 +987,7 @@ def get_grad_C(X, c_table):
     grad_C = np.zeros((3, n_atoms, n_atoms, 3))
 
     for j in range(X.shape[1]):
-        IB = (X[:, j] - get_ref_pos(X, c_table[0, j])).reshape((3, 1, 1))
+        IB = (X[:, j] - get_ref_pos_i(X, c_table[0, j])).reshape((3, 1, 1))
         grad_S_inv = get_grad_S_inv(get_T(X, c_table, j)[1])
         err, B = get_B(X, c_table, j)
         if err == ERR_CODE_InvalidReference:
