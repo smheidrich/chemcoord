@@ -590,7 +590,7 @@ class CartesianGetZmat(CartesianCore):
         If you create several zmatrices based on the same references
         you can obtain the construction table of a zmatrix with
         ``Zmat_instance.loc[:, ['b', 'a', 'd']]``
-        If you then pass the buildlist as argument to ``give_zmat``,
+        If you then pass the buildlist as argument to ``get_zmat``,
         the algorithm directly starts with step 3 (which is much faster).
 
         If a ``construction_table`` is passed into :meth:`~Cartesian.get_zmat`
@@ -741,7 +741,7 @@ class CartesianGetZmat(CartesianCore):
     def to_zmat(self, *args, **kwargs):
         """Deprecated, use :meth:`~Cartesian.get_zmat`
         """
-        message = 'Will be removed in the future. Please use give_zmat.'
+        message = 'Will be removed in the future. Please use get_zmat.'
         with warnings.catch_warnings():
             warnings.simplefilter("always")
             warnings.warn(message, DeprecationWarning)

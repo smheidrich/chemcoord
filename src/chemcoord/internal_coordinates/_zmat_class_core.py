@@ -733,7 +733,7 @@ and assigning values safely.
         Args:
             construction_table (pandas.DataFrame):
             as_function (bool): Return a tensor or
-                :func:`xyz_functions.apply_grad_zmat_tensor`
+                :func:`zmat_functions.apply_grad_cartesian_tensor`
                 with partially replaced arguments.
             chain (bool):
             drop_auto_dummies (bool): Drop automatically created
